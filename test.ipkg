@@ -1,0 +1,10 @@
+package test
+
+main = Test.Main
+executable = test
+
+sourcedir = "src"
+
+depends = aoc21
+
+modules = Test.Main

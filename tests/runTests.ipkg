@@ -1,8 +1,0 @@
-package runTests
-
-depends = aoc21
-
-modules = Tests
-main = Tests
-
-executable = runTests

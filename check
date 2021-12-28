@@ -2,4 +2,4 @@
 
 set -e
 
-idris2 -Werror --typecheck
+nix develop -c "idris2 -Werror --typecheck"
