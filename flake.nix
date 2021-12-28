@@ -12,16 +12,16 @@
       let
         pkgs = import nixpkgs { inherit system; overlays = [ idris2-pkgs.overlay ]; };
         inherit (pkgs.idris2-pkgs._builders) idrisPackage devEnv;
-        mypkg = idrisPackage ./. { };
-        runTests = idrisPackage ./tests { extraPkgs.mypkg = mypkg; };
+        aoc21 = idrisPackage ./. { };
+        runTests = idrisPackage ./tests { extraPkgs.aoc21 = aoc21; };
       in
       {
-        defaultPackage = mypkg;
+        defaultPackage = aoc21;
 
-        packages = { inherit mypkg runTests; };
+        packages = { inherit aoc21 runTests; };
 
         devShell = pkgs.mkShell {
-          buildInputs = [ (devEnv mypkg) ];
+          buildInputs = [ (devEnv aoc21) ];
         };
       }
     );

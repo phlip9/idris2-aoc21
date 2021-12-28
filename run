@@ -3,4 +3,4 @@
 set -e
 
 # idris2 -Werror --build && build/exec/mypkg
-nix run .#mypkg
+nix run .#aoc21

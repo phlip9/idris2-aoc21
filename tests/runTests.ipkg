@@ -1,6 +1,6 @@
 package runTests
 
-depends = mypkg
+depends = aoc21
 
 modules = Tests
 main = Tests

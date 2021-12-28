@@ -1,10 +1,10 @@
-package mypkg
+package aoc21
 
 modules = Main
 main = Main
 
 depends = contrib
 
-executable = mypkg
+executable = aoc21
 
 sourcedir = "src"
