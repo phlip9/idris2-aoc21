@@ -1,0 +1,7 @@
+# Idris2 build directory
+build/
+
+# Ignore backups
+*~
+bundle.backup
+.*.swp
