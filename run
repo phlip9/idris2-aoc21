@@ -2,4 +2,5 @@
 
 set -e
 
-idris2 -Werror --build && build/exec/mypkg
+# idris2 -Werror --build && build/exec/mypkg
+nix run .#mypkg
