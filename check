@@ -1,5 +1,0 @@
-#!/bin/bash
-
-set -e
-
-nix develop -c idris2 -Werror --typecheck aoc21.ipkg

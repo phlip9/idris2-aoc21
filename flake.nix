@@ -13,7 +13,11 @@
         pkgs = import nixpkgs { inherit system; overlays = [ idris2-pkgs.overlay ]; };
         inherit (pkgs.idris2-pkgs._builders) idrisPackage devEnv;
         aoc21 = idrisPackage ./. { };
-        tests = idrisPackage ./. { ipkgFile = "test.ipkg"; extraPkgs.aoc21 = aoc21; };
+        tests = idrisPackage ./. {
+            ipkgFile = "test.ipkg";
+            extraPkgs.aoc21 = aoc21;
+            buildInputs = [ pkgs.rlwrap ];
+        };
       in
       {
         defaultPackage = aoc21;
