@@ -55,11 +55,6 @@ parity (S k) = case parity k of
 --   parity (S (S (j + j)))     | Even = rewrite plusSuccRightSucc j j in Even {n = S j}
 --   parity (S (S (S (j + j)))) | Odd = rewrite plusSuccRightSucc j j in Odd {n = S j}
 
-
-
--- windowsN' n xs = let (window, rest) = splitAt n xs in
---                      window :: ?test -- windowsN n ((drop 1 window) :: rest)
-
 -- takeM' : Nat -> Maybe (List a) -> List a -> Maybe (List a)
 -- takeM' _ Nothing _ = Nothing
 -- takeM' 0 (Just acc) _ = Just acc
@@ -95,3 +90,6 @@ takeM n xs = map fst (splitAtM n xs)
 -- windowsN' Z _ _ = []
 -- windowsN' _ Z _ = []
 -- windowsN' n m xs = let (window, rest) = splitAt n xs in
+
+-- windowsN' n xs = let (window, rest) = splitAt n xs in
+--                      window :: ?test -- windowsN n ((drop 1 window) :: rest)

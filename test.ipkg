@@ -6,5 +6,11 @@ executable = test
 sourcedir = "src"
 
 depends = aoc21
+        , base
+        , contrib
+        , hedgehog
+        , sop
+        , elab-util
+        , pretty-show
 
 modules = Test.Main
