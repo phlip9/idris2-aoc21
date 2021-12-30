@@ -1,10 +1,13 @@
 package aoc21
 
-modules = Main
 main = Main
-
-depends = contrib
-
 executable = aoc21
 
 sourcedir = "src"
+
+depends = contrib
+
+modules = Main
+        , AOC.Day1
+        , System.ReadExt
+        , Scratch

@@ -1,7 +1,6 @@
 module Main
 
-main : IO ()
-main = printLn "foobnar"
+import AOC.Day1
 
-foo : Nat -> Nat
-foo x = 0
+main : IO ()
+main = day1
