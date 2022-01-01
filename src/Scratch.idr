@@ -4,7 +4,9 @@ import Control.Monad.Maybe
 import Data.List
 import Data.Maybe
 import Data.Nat
+import Data.String
 import Data.Vect
+import System.Clock
 
 %default total
 
@@ -295,3 +297,30 @@ login = do
   case maybeCreds of 
        Nothing => putStrLn "Bad credentials!"
        Just (user, _) => putStrLn ("Logged in as " ++ user)
+
+export
+fmtDuration : Clock Duration -> String
+fmtDuration dur
+  = let (s, ns) = (seconds dur, nanoseconds dur) in
+        if      ns == 0       then show s ++ " s"
+        else if s > 0         then showD ((cast s) + ((cast ns) * 1.0e-9)) ++ " s"
+        else if ns >= 1000000 then showD ((cast ns) * 1.0e-6) ++ " ms"
+        else if ns >= 1000    then showD ((cast ns) * 1.0e-3) ++ " µs"
+        else                       show ns ++ " ns"
+  where
+    trimDecimal : Nat -> String -> String
+    trimDecimal prec dec
+      = let (prefix_, suffix) = span (/= '.') dec in
+            prefix_ ++ substr 0 (prec + 1) suffix
+    showD : Double -> String
+    showD = trimDecimal 2 . show
+
+export
+timeit : String -> Lazy (IO a) -> IO a
+timeit label thunk
+  = do start <- clockTime Monotonic
+       val <- force thunk
+       now <- clockTime Monotonic
+       dt <- pure (timeDifference now start)
+       putStrLn (label ++ ": time: " ++ fmtDuration dt)
+       pure val
