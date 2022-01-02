@@ -128,7 +128,7 @@ takeM n xs = map fst (splitAtM n xs)
 --                         (window, suffix)
 
 
-
+||| (n + m) - n = m
 plusMinusCancel : (n : Nat) -> (m : Nat) -> (n + m) `minus` n = m
 plusMinusCancel Z     Z = Refl
 plusMinusCancel Z     m = rewrite plusZeroLeftNeutral m in
@@ -140,113 +140,75 @@ plusMinusCancel n     Z = rewrite plusZeroRightNeutral n in
 plusMinusCancel (S k) m = rewrite plusMinusCancel k m in
                                   Refl
 
+||| n <= m ==> n + (m - n) = m
+plusMinusLeftLte : (n, m : Nat) -> n `LTE` m -> n + (m `minus` n) = m
+plusMinusLeftLte n m ltePrf = rewrite plusCommutative n (m `minus` n) in
+                                      plusMinusLte n m ltePrf
 
-windowsN_rw : (j : Nat) -> (k : Nat) -> minus (S j + k) (minus (S j) 1) = S k
-windowsN_rw j k = rewrite plusMinusCancel 1 j in
-                  rewrite plusSuccRightSucc j k in
-                  rewrite plusMinusCancel j (S k) in
-                          Refl
+||| n <= m ==> n - m = 0
+minusLTE : n `LTE` m -> n `minus` m = 0
+minusLTE LTEZero = Refl
+minusLTE (LTESucc lte) = minusLTE lte
 
-export
-windowsNStep : (n : Nat) -> (xs : Vect (n + m) a) -> (Vect n a, Vect ((n + m) `minus` 1) a)
-windowsNStep n xs = let window = take n xs
-                        suffix = drop' 1 xs in
-                        (window, suffix)
+||| n < m ==> n <= m - 1
+ltImpliesLTEMinusOne : {m : Nat} -> n `LT` m -> n `LTE` (m `minus` 1)
+ltImpliesLTEMinusOne {m=S k} (LTESucc lte) = rewrite minusZeroRight k in lte
 
-export
-windowsN : {m : Nat} -> (n : Nat) -> (xs : Vect (n + m) a) -> Vect ((n + m) `minus` (n `minus` 1)) (Vect n a)
-windowsN {m=Z} Z xs
+||| n < m ==> n - (m - 1) = 0
+minusLTMinusOneEqZ : {m : Nat} -> n `LT` m -> n `minus` (m `minus` 1) = 0
+minusLTMinusOneEqZ lt = let lte = ltImpliesLTEMinusOne {m=m} lt in 
+                            minusLTE lte
+
+||| intermediate proof goal
+windows_rw : (j : Nat) -> (k : Nat) -> minus (S j + k) (minus (S j) 1) = S k
+windows_rw j k = rewrite plusMinusCancel 1 j in
+                 rewrite plusSuccRightSucc j k in
+                 rewrite plusMinusCancel j (S k) in
+                         Refl
+
+windowsInductiveStep : (n : Nat) -> (xs : Vect (n + m) a) -> (Vect n a, Vect ((n + m) `minus` 1) a)
+windowsInductiveStep n xs = let window = take n xs
+                                suffix = drop' 1 xs in
+                                (window, suffix)
+
+||| non degenerate cases (where n <= length xs)
+windowsNonDegen : {m : Nat} -> (n : Nat) -> (xs : Vect (n + m) a) -> Vect ((n + m) `minus` (n `minus` 1)) (Vect n a)
+windowsNonDegen {m=Z} Z xs
   = []
-windowsN {m=m} Z xs
+windowsNonDegen {m=m} Z xs
   = rewrite plusZeroLeftNeutral m in
     rewrite minusZeroRight m in
             replicate m []
-windowsN {m=Z} (S j) xs
+windowsNonDegen {m=Z} (S j) xs
   = rewrite plusZeroRightNeutral (S j) in
     rewrite minusZeroRight j in
     rewrite sym $ minusOneSuccN j in
     rewrite sym $ plusZeroRightNeutral j in
             [xs]
-windowsN {m=S k} (S j) xs
-  = let (window, suffix) = windowsNStep (S j) xs -- in
-        induction = windowsN {m=k} (S j) (rewrite (plusSuccRightSucc j k) in
-                                          rewrite (sym $ minusZeroRight (j + (S k))) in suffix) in
+windowsNonDegen {m=S k} (S j) xs
+  = let (window, suffix) = windowsInductiveStep (S j) xs -- in
+        induction = windowsNonDegen {m=k} (S j) (rewrite (plusSuccRightSucc j k) in
+                                                 rewrite (sym $ minusZeroRight (j + (S k))) in suffix) in
         -- WTB lean simp tactic :<
         (rewrite (minusZeroRight j) in
          rewrite (plusSuccRightSucc j (S k)) in
          rewrite (plusMinusCancel j (S (S k))) in
-         rewrite (sym $ windowsN_rw j k) in
+         rewrite (sym $ windows_rw j k) in
                  (window :: induction))
 
--- windowsN n Z xs = rewrite plusZeroRightNeutral n in
---                   rewrite _ in [xs]
--- windowsN n (S k) xs = ?help2
+export
+windows : {m : Nat} -> (n : Nat) -> (xs : Vect m a) -> Vect (m `minus` (n `minus` 1)) (Vect n a)
+windows n xs with (isLTE n m)
+  _ | Yes (lte) = let xs = (rewrite plusMinusLeftLte n m lte in xs)
+                      out = windowsNonDegen {m=m `minus` n} n xs
+                      out = (rewrite (sym $ plusMinusLeftLte n m lte) in out) in
+                      out
+  _ | No (notLTE) = let lt = notLTEImpliesGT notLTE in
+                        (rewrite minusLTMinusOneEqZ lt in [])
 
--- windowsN : (n : Nat) -> (m : Nat) -> (xs : Vect (n + (S m)) a) -> Vect (n + (S m)) (Vect n a)
--- windowsN n Z xs = ?help
--- windowsN n (S k) xs = ?help2
-
--- minusSuccOfMinus : (n : Nat) -> (m : Nat) -> S (n `minus` m) = (S n) `minus` m
--- minusSuccOfMinus Z Z = Refl
--- minusSuccOfMinus Z m = Refl
--- minusSuccOfMinus _ _ = ?help3
-
--- minusSuccOfMinusSucc : (n : Nat) -> (m : Nat) -> S (n `minus` (S m)) = n `minus` m
--- minusSuccOfMinusSucc Z Z = Refl
--- minusSuccOfMinusSucc n m = ?help2
-
--- windowsN : (n : Nat) -> (m : Nat) -> (xs : Vect ((S n) + m) a) -> Vect (S (m `minus` (S n))) (Vect (S n) a)
--- windowsN : (n : Nat) -> (m : Nat) -> (xs : Vect ((S n) + m) a) -> Vect (m `minus` n) (Vect (S n) a)
--- windowsN n Z xs = [] -- rewrite sym $ plusZeroRightNeutral n in [xs]
--- windowsN n (S k) xs with (cmp n k)
---   windowsN n (S k) xs | CmpLT _ = ?help1
---   windowsN n (S k) xs | CmpEQ = ?help2
---   windowsN n (S k) xs | CmpGT _ = ?help3
--- windowsN n (S k) xs = ?help2
--- windowsN n (S k) xs = let (window, suffix) = windowsNStep n xs in ?help
--- windowsN n (S k) xs = let (window, suffix) = windowsNStep n xs
-                          -- induction = windowsN n k suffix in
-                          -- induction = windowsN n k (rewrite (plusSuccRightSucc n k) in suffix) in 
-                          -- ?help
-                          -- (window :: induction)
-                          -- suffix = (rewrite sym $ plusSuccRightSucc n k in suffix)
-                            -- let induction = windowsN n k suffix in
-                          -- rewrite plusSuccRightSucc n k in
-                                  -- ?help
-
-
--- windowsN : (n : Nat) -> (m : Nat) -> (xs : Vect ((S n) + m) a) -> Vect (S ((S m) `minus` n)) (Vect (S n) a)
--- windowsN n m xs with ()
-
-
--- length xs = S (n `plus` m)
--- S (minus m (S n)) = 1 + (m - (1 + n))
-
-
--- windowsNStep : (n : Nat) -> (xs : Vect (n + m) a) -> (Vect n a, Vect ((n + m) `minus` 1) a)
--- windowsNStep n xs = let (window, rest) = splitAt n xs
---                         suffix = drop' 1 xs in -- ?help
---                         (window, suffix)
-                        -- rewrite plusMinusOne (n `plus` m) in ?help -- (window, suffix)
-
-                        -- plus n m 
-                        -- S (minus (plus n m) 1)
-                        -- let k = plus n m
-                        -- S (minus k 1) = plus (minus k 1) 1
-
-                        -- case k = 0 => plus (minus 0 1) 1 = plus 0 1 = S 0 = S (minus 0 1)
-                        -- case k = 1 => plus (minus 1 1) 1 = plus 0 1 = S 0 = S (minus 1 1)
-                        -- case k = 2 => plus (minus 2 1) 1 = plus 1 1 = S 1 = S (minus 2 1)
-                        -- ...
-
--- windowsN' : (n : Nat) -> (m : Nat) -> Vect (n + m) a -> List (Vect n a)
--- windowsN' Z _ _ = []
--- windowsN' _ Z _ = []
--- windowsN' n m xs = let (window, rest) = splitAt n xs in
-
--- windowsN' n xs = let (window, rest) = splitAt n xs in
---                      window :: ?test -- windowsN n ((drop 1 window) :: rest)
-
+export
+windowsL : (n : Nat) -> (xs : List a) -> List (Vect n a)
+windowsL n xs = toList $ windows n (fromList xs)
 
 -- data MaybeT' : (m : Type -> Type) -> (a : Type) -> Type where
 --   MkMaybeT' : m (Maybe a) -> MaybeT' m a
@@ -324,3 +286,99 @@ timeit label thunk
        dt <- pure (timeDifference now start)
        putStrLn (label ++ ": time: " ++ fmtDuration dt)
        pure val
+
+
+-- Vect' : (n : Nat) -> a -> (p ** (p, List a))
+
+-- data Vect = (Nat, List a)
+
+-- namespace Vect'
+--   data View : Nat -> List a -> Type where
+--     Nil : View Z []
+--     (::) : (x : a) -> (xs : View n xs_) -> View (S n) (x :: xs_)
+-- 
+--   view : List a 
+
+public export
+data LenListT : (len : Nat) -> (a : Type) -> Type where
+  LenList : (len : Nat) -> (xs : List a) -> LenListT len a
+
+-- data LenListT Nat a = LenList (List a)
+-- data LenList : a -> (len : Nat) -> (xs : List a) -> Type
+-- LenList : a -> (Nat, List a)
+
+namespace LenListT
+  public export
+  Nil : LenListT 0 a
+  Nil = LenList 0 []
+
+  public export
+  (::) : (x : a) -> LenListT n a -> LenListT (S n) a
+  (::) x (LenList n xs) = LenList (S n) (x :: xs)
+
+  public export
+  toList : LenListT len a -> List a
+  toList (LenList len xs) = xs
+
+  public export
+  length : LenListT len a -> Nat
+  length (LenList len _) = len
+
+public export
+data VLenListT : (len : Nat) -> (a : Type) -> Type where
+  -- VLenList : (ll : LenListT len a) -> (prf : List.length (toList ll) = length ll) -> VLenListT len a
+  VLenList : (ll : LenListT len a) -> {0 prf : List.length (toList ll) = length ll} -> VLenListT len a
+
+namespace VLenListT
+  public export
+  Nil : VLenListT 0 a
+  Nil = VLenList (LenList 0 []) {prf=Refl}
+
+  public export
+  (::) : (x : a) -> VLenListT n a -> VLenListT (S n) a
+  (::) x (VLenList (LenList n xs) {prf=prf}) = VLenList (LenList (S n) (x :: xs)) {prf=cong S prf}
+
+-- public export
+-- VLenList : (ll : LenListT len a) -> (List.) -> VLenListT len a
+
+-- export
+-- data VLenListT a = VLenList (LenListT a ** ?help)
+
+-- data Vect'' = ((Nat, List a) ** (\(len, xs) => List.length xs = len))
+
+public export
+record Vect' (len : Nat) (a : Type) where
+  constructor MkVect'
+  list : List a
+  {0 prf : List.length list = len}
+
+namespace Vect'
+  public export
+  Nil : Vect' 0 a
+  Nil = MkVect' [] {prf=Refl}
+
+  public export
+  (::) : (x : a) -> Vect' n a -> Vect' (S n) a
+  (::) x vect = { list := (x :: vect.list)
+                , prf := cong S vect.prf
+                } vect
+
+  export
+  toList : Vect' _ a -> List a
+  toList vect = vect.list
+
+  export
+  fromList : (xs : List a) -> Vect' (List.length xs) a
+  fromList xs with (List.length xs) proof prf
+    _ | len = MkVect' xs {prf}
+
+  export
+  length : {n : Nat} -> Vect' n a -> Nat
+  length _ = n
+
+export
+testVect' : Vect' 3 Integer
+testVect' = [1, 2, 3]
+
+-- failVect' : Vect' Integer
+-- failVect' = MkVect' 5 [1,2,3] Refl
