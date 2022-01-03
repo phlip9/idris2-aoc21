@@ -287,6 +287,10 @@ timeit label thunk
        putStrLn (label ++ ": time: " ++ fmtDuration dt)
        pure val
 
+export
+part : Show a => String -> Lazy a -> IO ()
+part label thunk = do out <- timeit label $ delay (pure (force thunk))
+                      putStrLn (label ++ ":  out: " ++ show out ++ "\n")
 
 -- Vect' : (n : Nat) -> a -> (p ** (p, List a))
 

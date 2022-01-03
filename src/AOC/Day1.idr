@@ -58,32 +58,29 @@ part2' (x1 :: x2 :: x3 :: xs) = fst $ foldl foldCount (0, x1 + x2 + x3, x2, x1) 
             (count + inc, nextSum, prev1, next)
 
 export
-day1 : IO ()
-day1
-  = do Right lines <- readFileWithLimit "data/01"
-             | Left err => putStrLn ("Error reading data: " ++ show err)
-       let xs = parse lines
-       part "Part 1" $ part1 xs
-       part "Part 1'" $ part1' xs
-       part "Part 1''" $ part1'' xs
-       part "Part 2" $ part2 xs
-       part "Part 2'" $ part2' xs
+day1 : String -> IO ()
+day1 inputFilename = do
+  Right lines <- readFileWithLimit inputFilename
+  | Left err => putStrLn ("Error reading data: " ++ show err)
+  let xs = parse lines
+  part "Part 1" $ part1 xs
+  part "Part 1'" $ part1' xs
+  part "Part 1''" $ part1'' xs
+  part "Part 2" $ part2 xs
+  part "Part 2'" $ part2' xs
 
-       Right (n ** lines) <- readFileWithLimit' "data/01"
-             | Left err => putStrLn ("Error reading data: " ++ show err)
-       putStrLn "Read \{show n} lines"
-       let (m ** xs) = parse' lines
-       putStrLn "\{show m} lines after parsing"
+  Right (n ** lines) <- readFileWithLimit' "data/01"
+  | Left err => putStrLn ("Error reading data: " ++ show err)
+  putStrLn "Read \{show n} lines"
+  let (m ** xs) = parse' lines
+  putStrLn "\{show m} lines after parsing"
 
-       part "Part 1V" $ part1V xs
-       part "Part 1V'" $ part1V' xs
-       part "Part 1V''" $ part1V'' xs
-       part "Part 1V'''" $ part1V''' xs
+  part "Part 1V" $ part1V xs
+  part "Part 1V'" $ part1V' xs
+  part "Part 1V''" $ part1V'' xs
+  part "Part 1V'''" $ part1V''' xs
+
   where
-    part : String -> Lazy Integer -> IO ()
-    part label thunk = do out <- timeit label $ delay (pure (force thunk))
-                          putStrLn (label ++ ":  out: " ++ show out ++ "\n")
-
     parse : List String -> List Integer
     parse lines = mapMaybe parseInteger lines
 

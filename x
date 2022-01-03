@@ -15,7 +15,8 @@ function usage() {
 
 case "$1" in 
     run)
-        nix run .#aoc21
+        shift
+        nix run .#aoc21 -- $@
         ;;
     check)
         nix develop -c idris2 -Werror --typecheck aoc21.ipkg
@@ -24,7 +25,8 @@ case "$1" in
         nix develop -c rlwrap idris2 --repl aoc21.ipkg
         ;;
     test)
-        HEDGEHOG_COLOR=1 nix run .#tests
+        shift
+        HEDGEHOG_COLOR=1 nix run .#tests -- $@
         ;;
     test-check)
         nix develop .#tests -c idris2 -Werror --typecheck test.ipkg
