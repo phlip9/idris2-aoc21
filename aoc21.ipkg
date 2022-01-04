@@ -10,5 +10,6 @@ depends = contrib
 modules = Main
         , AOC.Day1
         , AOC.Day2
+        , AOC.Day3
         , System.ReadExt
         , Scratch

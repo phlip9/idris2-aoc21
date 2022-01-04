@@ -22,7 +22,8 @@ case "$1" in
         nix develop -c idris2 -Werror --typecheck aoc21.ipkg
         ;;
     repl)
-        nix develop -c rlwrap idris2 --repl aoc21.ipkg
+        # nix develop -c rlwrap idris2 --repl aoc21.ipkg
+        nix develop -c rlwrap idris2 --find-ipkg src/Main.idr
         ;;
     test)
         shift
