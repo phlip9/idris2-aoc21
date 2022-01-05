@@ -11,5 +11,7 @@ modules = Main
         , AOC.Day1
         , AOC.Day2
         , AOC.Day3
+        , AOC.Day4
+        , Data.Vec
         , System.ReadExt
         , Scratch

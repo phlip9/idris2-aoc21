@@ -3,6 +3,7 @@ module Main
 import AOC.Day1
 import AOC.Day2
 import AOC.Day3
+import AOC.Day4
 import Data.Either
 import Data.List
 import Data.String
@@ -12,7 +13,7 @@ Day : Type
 Day = (String -> IO ())
 
 days : List Day
-days = [day1, day2, day3]
+days = [day1, day2, day3, day4]
 
 record Args where
   constructor MkArgs
