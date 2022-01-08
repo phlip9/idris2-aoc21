@@ -2,6 +2,7 @@ module Scratch
 
 import Control.Monad.Maybe
 import Data.List
+import Data.List1
 import Data.Maybe
 import Data.Nat
 import Data.String
@@ -9,6 +10,14 @@ import Data.Vect
 import System.Clock
 
 %default total
+
+public export %inline
+U64 : Type
+U64 = Bits64
+
+public export %inline
+F64 : Type
+F64 = Double
 
 plusOneEqSuccLeft : (right : Nat) -> 1 + right = S right
 plusOneEqSuccLeft _ = Refl
@@ -234,31 +243,52 @@ windowsL n xs = toList $ windows n (fromList xs)
 -- (>>=) : m a -> (a -> m b) -> m b
 -- (>>=) (runMaybeT' x) : (Maybe a -> m b) -> m b
 
-readUser : MaybeT IO String
-readUser = do
-  putStrLn "Enter username: "
-  str <- getLine
-  if length str > 5
-     then just str
-     else nothing
+-- readUser : MaybeT IO String
+-- readUser = do
+--   putStrLn "Enter username: "
+--   str <- getLine
+--   if length str > 5
+--      then just str
+--      else nothing
+-- 
+-- readPass : MaybeT IO String
+-- readPass = do
+--   putStrLn "Enter password: "
+--   str <- getLine
+--   if length str <= 5
+--      then just str
+--      else nothing
+-- 
+-- login : IO ()
+-- login = do
+--   maybeCreds <- runMaybeT $ do
+--     user <- readUser
+--     pass <- readPass
+--     pure (user, pass)
+--   case maybeCreds of 
+--        Nothing => putStrLn "Bad credentials!"
+--        Just (user, _) => putStrLn ("Logged in as " ++ user)
 
-readPass : MaybeT IO String
-readPass = do
-  putStrLn "Enter password: "
-  str <- getLine
-  if length str <= 5
-     then just str
-     else nothing
+-- [0..end] inclusive
+export
+rangeTo : Range a => Neg a => Eq a => (end : a) -> List1 a
+rangeTo end = if end == 0
+                then List1.singleton 0
+                else (end ::: [0..end - 1])
 
-login : IO ()
-login = do
-  maybeCreds <- runMaybeT $ do
-    user <- readUser
-    pass <- readPass
-    pure (user, pass)
-  case maybeCreds of 
-       Nothing => putStrLn "Bad credentials!"
-       Just (user, _) => putStrLn ("Logged in as " ++ user)
+export
+toNanos : Clock type -> Integer
+toNanos (MkClock seconds nanoseconds) =
+  let scale = 1000000000
+   in scale * seconds + nanoseconds
+
+export
+fromNanos : Cast a Integer => (ns : a) -> Clock Duration
+fromNanos ns =
+  let scale = 1000000000
+      seconds = (cast ns) `div` scale
+      nanoseconds = (cast ns) `mod` scale
+   in MkClock seconds nanoseconds
 
 export
 fmtDuration : Clock Duration -> String

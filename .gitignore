@@ -1,6 +1,10 @@
 # Idris2 build directory
 build/
 
+# Idris2 profile outputs
+*.ss.html
+profile.html
+
 # Ignore backups
 *~
 bundle.backup

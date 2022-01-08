@@ -6,6 +6,7 @@ function usage() {
     echo "x [option ...] subcommand"
     echo ""
     echo "· x run - run the main package binary"
+    echo "· x run-prof - run the main package with profiling enabled"
     echo "· x check - typecheck the main package"
     echo "· x repl - start an idris2 repl on the main package"
     echo "· x test - run all tests"
@@ -17,6 +18,10 @@ case "$1" in
     run)
         shift
         nix run .#aoc21 -- $@
+        ;;
+    run-prof)
+        shift
+        nix develop -c bash -c "idris2 -Werror --profile --build aoc21.ipkg && build/exec/aoc21 $@"
         ;;
     check)
         nix develop -c idris2 -Werror --typecheck aoc21.ipkg

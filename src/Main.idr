@@ -4,6 +4,7 @@ import AOC.Day1
 import AOC.Day2
 import AOC.Day3
 import AOC.Day4
+import Bench
 import Data.Either
 import Data.List
 import Data.String
@@ -15,10 +16,15 @@ Day = (String -> IO ())
 days : List Day
 days = [day1, day2, day3, day4]
 
-record Args where
-  constructor MkArgs
-  day : Day
-  inputFilename : String
+data Command
+  = RunDay Day String
+  | Bench
+
+namespace Command
+  export
+  run : Command -> IO ()
+  run (RunDay day filename) = day filename
+  run (Bench) = Bench.main
 
 namespace List
   export
@@ -29,7 +35,10 @@ namespace List
 
 usage : String
 usage = """
-aoc21 [option ...] day input
+aoc21 [option ...] subcommand
+
+· aoc21 day day file - run a day
+· aoc21 bench - run the benchmarks
 """
 
 parseDay : String -> Maybe Day
@@ -38,15 +47,30 @@ parseDay dayIdx = do
   | 0 => Nothing
   List.get dayIdx days
 
-parseArgs : List String -> Either String Args
-parseArgs [dayIdx, input] = do
+parseError : String -> Either String a
+parseError err = Left $ err ++ "\n\n" ++ usage
+
+parseRunDay : List String -> Either String Command
+parseRunDay [dayIdx, input] = do
   day <- maybeToEither "invalid day" (parseDay dayIdx)
-  Right $ MkArgs day input
-parseArgs _ = Left $ "invalid number of arguments" ++ "\n\n" ++ usage
+  Right $ RunDay day input
+parseRunDay _ = parseError "day: invalid number of arguments"
+
+parseBench : List String -> Either String Command
+parseBench [] = Right $ Bench
+parseBench _ = parseError "bench: invalid number of arguments"
+
+parseCommand : List String -> Either String Command
+parseCommand (cmd :: rest) = case cmd of
+                                  "day" => parseRunDay rest
+                                  "bench" => parseBench rest
+                                  _ => parseError "unknown subcommand"
+parseCommand [] = parseError "invalid arguments: expected subcommand"
 
 main : IO ()
 main = do
   args <- getArgs
-  Right args <- pure $ parseArgs (drop 1 args)
+  Right cmd <- pure $ parseCommand (drop 1 args)
   | Left err => putStrLn ("error parsing arguments: " ++ err)
-  args.day args.inputFilename
+
+  Command.run cmd
