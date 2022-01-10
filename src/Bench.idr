@@ -3,6 +3,7 @@ module Bench
 import Data.List
 import Data.List1
 import Data.String
+import Data.Vec
 import Scratch
 import System.Clock
 import System.Random
@@ -176,10 +177,6 @@ collectSample k prog = do
   let nsElapsed = toNanos end - toNanos start
   pure nsElapsed
 
-total
-safeDiv1 : Integral a => Ord a => a -> a -> a
-safeDiv1 x y = x `div` (max 1 y)
-
 ||| Progressively double the number of samples until the absolute error stabilizes.
 ||| Stop sampling if this bench takes too long (>3 seconds).
 bIterInner : Integer -> Clock Duration -> IO a -> IO Summary
@@ -212,9 +209,14 @@ bIterInner samplesPerIter totalDuration prog = do
     then pure (summary')
     else if totalDuration > Clock.fromSecs 3
       then pure (summary')
-      -- This function terminates since the clock is monotonic
+      -- This loop terminates since the clock is monotonic and we double the
+      -- amount of work each iteration.
       else assert_total $ bIterInner (samplesPerIter * 2) totalDuration prog
 
+safeDiv1 : Integral a => Ord a => a -> a -> a
+safeDiv1 x y = x `div` (max 1 y)
+
+export
 bIter : (prog : IO a) -> IO Summary
 bIter prog = do
   -- to start, let's estimate the number of iterations needed to hit a minimum
@@ -225,13 +227,16 @@ bIter prog = do
 
   bIterInner samplesPerIter (Clock.fromSecs 0) prog
 
+export
 data Benchmark
   = Single String (IO Summary)
   | Group String (List Benchmark)
 
+export
 bench : String -> IO Summary -> Benchmark
 bench = Single
 
+export
 benchGroup : String -> List Benchmark -> Benchmark
 benchGroup = Group
 
@@ -259,7 +264,10 @@ runBenchmark (Group label benches) = do
   putStrLn $ replicate (length header) '━'
   for_ benches $ \bench => do
     assert_total $ runBenchmark $ withPrefix label bench
+  putStrLn ""
 
+-- TODO(phlip9): CLI options & benchmark filtering
+export
 benchMain : List Benchmark -> IO ()
 benchMain benches = for_ benches runBenchmark
 
@@ -276,11 +284,36 @@ benchListSum4 = do
 export
 main : IO ()
 main = benchMain
-  [ benchGroup "sum list"
+  [ benchGroup "sum List"
       [ bench "inline" $ do
           let xs : List Int32 = [1..10000]
           bIter $ pure (sum xs)
-      , bench "io setup" benchListSum''
-      , bench "rand input" benchListSum4
+      ]
+  , benchGroup "sum IOVec"
+      [ bench "IO" $ do
+          xs <- IOVec.fromList {a=Int32} [1..10000]
+          bIter $ IOVec.sum xs
+      , bench "unsafeIO" $ do
+          xs <- IOVec.fromList {a=Int32} [1..10000]
+          bIter $ pure (IOVec.sum' xs)
+      , bench "unsafeIO spec" $ do
+          xs <- IOVec.fromList {a=Int32} [1..10000]
+          bIter $ pure (IOVec.sum'' xs)
+      , bench "unsafeIO spec,inl" $ do
+          xs <- IOVec.fromList {a=Int32} [1..10000]
+          bIter $ pure (IOVec.sum''' xs)
+      , bench "unsafeIO spec,inl,get" $ do
+          xs <- IOVec.fromList {a=Int32} [1..10000]
+          bIter $ pure (IOVec.sum4 xs)
+      ]
+  , benchGroup "sum IOVec"
+      [ bench "pure spec,inl" $ do
+          let xs = Vec.fromList {a=Int32} [1..10000]
+          bIter $ pure $ Vec.sum xs
+      ]
+  , benchGroup "sum I61Vec"
+      [ bench "pure spec,inl" $ do
+          let xs = I61Vec.fromList [1..10000]
+          bIter $ pure $ I61Vec.sum xs
       ]
   ]
