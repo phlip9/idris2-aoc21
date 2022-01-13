@@ -416,3 +416,10 @@ testVect' = [1, 2, 3]
 
 -- failVect' : Vect' Integer
 -- failVect' = MkVect' 5 [1,2,3] Refl
+
+infixl 1 |>
+
+||| pipeline operator
+public export
+(|>) : a -> (f : (a -> b)) -> b
+(|>) x f = f x
